@@ -7,23 +7,25 @@ defmodule Cluster.Application do
 
   @impl true
   def start(_type, _args) do
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: Cluster.Supervisor]
+         # See https://hexdocs.pm/elixir/Supervisor.html
+        # for other strategies and supported options
+        opts = [strategy: :one_for_one, name: Cluster.Supervisor]
 
-    children =
-      [
-        # Children for all targets
-        # Starts a worker by calling: Cluster.Worker.start_link(arg)
-        # {Cluster.Worker, arg},
-      ] ++ children(target())
+        children =
+          [
+            # Children for all targets
+            # Starts a worker by calling: Cluster.Worker.start_link(arg)
+            # {Cluster.Worker, arg},
+          ] ++ children(target())
+    some = Supervisor.start_link(children, opts)
 
-    Supervisor.start_link(children, opts)
+    setupWifi()
 
-    node_name = :"eder@#{Toolshed.hostname()}"
+    node_name = :"app@192.168.0.11"
     System.cmd("epmd", ["-daemon"])
     Node.start(node_name)
-    VintageNetWiFi.quick_configure("LOCALHOST", "Mefess0727")
+    Node.set_cookie(:PLXATUNGSDBIRVZNZSKB)
+    some
   end
 
   # List all child processes to be supervised
@@ -45,5 +47,11 @@ defmodule Cluster.Application do
 
   def target() do
     Application.get_env(:cluster, :target)
+  end
+
+  defp setupWifi do
+    unless Cluster.Application.target() == :host do
+      VintageNetWiFi.quick_configure("LOCALHOST", "Mefess0727")
+    end
   end
 end
