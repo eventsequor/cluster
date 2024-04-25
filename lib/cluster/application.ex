@@ -6,6 +6,7 @@ defmodule Cluster.Application do
   use Application
 
   @impl true
+  @spec start(any(), any()) :: {:error, any()} | {:ok, pid()}
   def start(_type, _args) do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -13,17 +14,15 @@ defmodule Cluster.Application do
 
     children =
       [
+        {Cluster.NodeCluster, :ok},
+        {Cluster.LoadBalancer, 0},
+        {Mutex, name: MyMutexConnect, meta: "some_data"}
         # Children for all targets
         # Starts a worker by calling: Cluster.Worker.start_link(arg)
         # {Cluster.Worker, arg},
       ] ++ children(target())
 
     Supervisor.start_link(children, opts)
-
-    node_name = :"eder@#{Toolshed.hostname()}"
-    System.cmd("epmd", ["-daemon"])
-    Node.start(node_name)
-    VintageNetWiFi.quick_configure("LOCALHOST", "Mefess0727")
   end
 
   # List all child processes to be supervised

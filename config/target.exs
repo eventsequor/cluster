@@ -1,5 +1,9 @@
 import Config
 
+# Eder
+
+{:ok, hostname} = :inet.gethostname()
+
 # Use Ringlogger as the logger backend and remove :console.
 # See https://hexdocs.pm/ring_logger/readme.html for more information on
 # configuring ring_logger.
@@ -57,7 +61,22 @@ config :vintage_net,
        type: VintageNetEthernet,
        ipv4: %{method: :dhcp}
      }},
-    {"wlan0", %{type: VintageNetWiFi}}
+    {"wlan0",
+     %{
+       type: VintageNetWiFi,
+       vintage_net_wifi: %{
+         networks: [
+           %{
+             key_mgmt: :wpa_psk,
+             ssid: "LOCALHOST",
+             psk: "Mefess0727"
+             # ssid: "RedmiNote10S",
+             # psk: "some1234"
+           }
+         ]
+       },
+       ipv4: %{method: :dhcp}
+     }}
   ]
 
 config :mdns_lite,
@@ -69,11 +88,20 @@ config :mdns_lite,
   # because otherwise any of the devices may respond to nerves.local leading to
   # unpredictable behavior.
 
-  hosts: [:hostname, "nerves"],
+  # Use MdnsLite's DNS bridge feature to support mDNS resolution in Erlang
+  dns_bridge_enabled: true,
+  dns_bridge_port: 53,
+  dns_bridge_recursive: false,
+  hosts: [:hostname],
   ttl: 120,
 
   # Advertise the following services over mDNS.
   services: [
+    %{
+      protocol: "http",
+      transport: "tcp",
+      port: 80
+    },
     %{
       protocol: "ssh",
       transport: "tcp",
