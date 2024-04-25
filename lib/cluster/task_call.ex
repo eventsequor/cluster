@@ -1,4 +1,4 @@
-defmodule Cluster.Tasknodecallback do
+defmodule Cluster.TaskCall do
   def process(node, pid, patter_pid, module, function_name, args) do
     response = Kernel.apply(module, function_name, args)
     Node.spawn(node, fn -> Kernel.send(pid, {patter_pid, response}) end)
