@@ -1,15 +1,17 @@
 defmodule Exercises.Task1 do
-  def count(string) when is_bitstring(string) do
+  alias Cluster.TaskCall
+
+  def count(string, split_list \\ 1) when is_bitstring(string) do
     words_list =
       string
       |> String.replace(~r"[?:_!@#$%^&*:|,./]", "")
       |> String.replace("\n", " ")
       |> String.downcase()
       |> String.replace("\t", " ")
+      |> String.duplicate(700)
       |> String.split(" ")
       |> Enum.filter(fn x -> x != "" end)
 
-    words_list = duplicate(words_list, 14)
     IO.puts("Number of words #{Integer.to_string(Enum.count(words_list))}")
     # count_l(list_of_words) #only one list
 
@@ -17,21 +19,43 @@ defmodule Exercises.Task1 do
     # split_in_half_parts(words_list, 0)
 
     # Split in equals parts
-    IO.inspect(split_in_equals_parts(words_list, 12))
+    IO.inspect(split_in_equals_parts(words_list, split_list))
   end
 
   @spec split_in_equals_parts(any()) :: any()
   def split_in_equals_parts(words_list, parts_to_divide \\ 1) do
     parts_to_divide = if parts_to_divide < 1, do: 1, else: parts_to_divide
 
-    sub_list =
-      Enum.chunk_every(words_list, Integer.floor_div(Enum.count(words_list), parts_to_divide))
+    divide_in = Integer.floor_div(Enum.count(words_list), parts_to_divide)
 
-    x =
-      Enum.map(sub_list, fn part_of_list -> Task.async(fn -> count_l(part_of_list) end) end)
-      |> Task.await_many()
+    chucks =
+      Enum.chunk_every(words_list, divide_in)
 
-    Enum.reduce(x, Map.new(), fn feature_map, pivot_branch ->
+    sha = :crypto.hash(:sha, chucks)
+
+    Enum.each(Cluster.LoadBalancer.get_node_lists(), fn node ->
+      spawn(fn ->
+        sha_node_value = TaskCall.run_sync_auto_detect(Cluster.Variable, :get_sha, [])
+
+        unless sha == sha_node_value do
+          TaskCall.run_sync_auto_detect(Cluster.Variable, :save_new_value, [chucks])
+        end
+      end)
+    end)
+
+    IO.puts("Number os parts of list")
+    IO.inspect(Enum.count(chucks))
+    IO.inspect(divide_in)
+    IO.puts("\n")
+
+    chucks
+    |> Enum.map(fn part_of_list ->
+      Task.async(fn ->
+        Cluster.TaskCall.run_sync_auto_detect(__MODULE__, :count_l, [part_of_list])
+      end)
+    end)
+    |> Task.await_many(:infinity)
+    |> Enum.reduce(Map.new(), fn feature_map, pivot_branch ->
       Map.merge(feature_map, pivot_branch, fn _k, v1, v2 ->
         v1 + v2
       end)
@@ -48,7 +72,7 @@ defmodule Exercises.Task1 do
       Enum.map(Tuple.to_list(list_of_list), fn list_splited ->
         Task.async(fn -> split_in_half_parts(list_splited, times - 1) end)
       end)
-      |> Task.await_many()
+      |> Task.await_many(:infinity)
 
       Enum.reduce(list_of_list, Map.new(), fn feature_map, pivot_branch ->
         Map.merge(feature_map, pivot_branch, fn _k, v1, v2 ->
@@ -66,14 +90,6 @@ defmodule Exercises.Task1 do
         Map.put(words_map, word, Map.get(words_map, word) + 1)
       end
     end)
-  end
-
-  def duplicate(list_of_words, number_of_times \\ 10) do
-    if number_of_times > 0 do
-      duplicate(list_of_words ++ list_of_words, number_of_times - 1)
-    else
-      list_of_words
-    end
   end
 
   def test_t3 do

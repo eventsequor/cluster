@@ -15,4 +15,12 @@ defmodule Cluster.LoadBalancer do
     Mutex.release(MyMutexConnect, lock)
     Enum.at(node_list, pos)
   end
+
+  def get_node_lists do
+    resource_id = {User, {:id, 1}}
+    lock = Mutex.await(MyMutexConnect, resource_id)
+    node_list = Node.list() ++ [Node.self()]
+    Mutex.release(MyMutexConnect, lock)
+    node_list
+  end
 end

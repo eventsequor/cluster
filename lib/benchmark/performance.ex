@@ -13,6 +13,10 @@ defmodule Benchmark.Performance do
     :os.system_time(@time_mili) - start_time
   end
 
+  @doc """
+  Use example
+  Benchmark.Performance.average_mili(Exercises.Task1, :count, [Exercises.Texto.get_text(), 1])
+  """
   def average_mili(module, fun, args) do
     IO.puts("START TEST\n")
     tries = 10
