@@ -16,7 +16,7 @@ defmodule Cluster.Application do
       [
         {Cluster.NodeCluster, :ok},
         {Cluster.LoadBalancer, 0},
-        {Cluster.Variable, ""},
+        {Cluster.Variable, []},
         {Mutex, name: MyMutexConnect, meta: "some_data"},
         # Children for all targets
         # Starts a worker by calling: Cluster.Worker.start_link(arg)

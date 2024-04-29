@@ -53,14 +53,12 @@ defmodule Cluster.TaskCall do
       end)
 
     node = if node == nil, do: LoadBalancer.get_node(), else: node
-    IO.puts("Node to run service")
-    IO.inspect(node)
 
     Node.spawn(node, fn ->
       Kernel.send(task.pid, {:ok, Kernel.apply(module, function_name, args)})
     end)
 
-    Task.await(task, :infinity)
+    Task.await(task, 10000)
   end
 
   def run_sync_auto(node \\ nil, function, args) do
@@ -68,7 +66,6 @@ defmodule Cluster.TaskCall do
       Task.async(fn ->
         receive do
           {:ok, response} ->
-            IO.inspect(Toolshed.hostname())
             response
 
           _ ->
@@ -77,8 +74,6 @@ defmodule Cluster.TaskCall do
       end)
 
     node = if node == nil, do: LoadBalancer.get_node(), else: node
-    IO.puts("Node to run service")
-    IO.inspect(node)
 
     Node.spawn(node, fn ->
       Kernel.send(task.pid, {:ok, Kernel.apply(function, args)})

@@ -15,7 +15,7 @@ defmodule Benchmark.Performance do
 
   @doc """
   Use example
-  Benchmark.Performance.average_mili(Exercises.Task1, :count, [Exercises.Texto.get_text(), 1])
+  Benchmark.Performance.average_mili(Exercises.Task1, :count, [String.duplicate(Exercises.Texto.get_text(), 2), 1])
   """
   def average_mili(module, fun, args) do
     IO.puts("START TEST\n")
