@@ -48,6 +48,7 @@ defmodule Cluster.MixProject do
       {:toolshed, "~> 0.3.0"},
       {:mutex, "~> 1.3"},
       {:image, "~> 0.44.0"},
+      {:math, "~> 0.7.0"},
 
       # Allow Nerves.Runtime on host to support development, testing and CI.
       # See config/host.exs for usage.
