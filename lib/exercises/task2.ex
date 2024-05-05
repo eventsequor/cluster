@@ -1,12 +1,11 @@
 defmodule Exercises.Task2 do
-  alias Vix.Vips.Image, as: Image2
+  alias Cluster.TaskCall
 
-  def rotate(angle \\ 0) do
-    bin = File.read!("./data/source_images/box.png")
-    {_, %Image2{} = img} = Image2.new_from_buffer(bin)
+  def rotate(img, angle \\ 90) do
+    {:ok, image} = Imagineer.load("./data/source_images/box.png")
 
-    width = Image.width(img)
-    height = Image.height(img)
+    width = Map.get(image, :width)
+    height = Map.get(image, :width)
 
     angle = Math.deg2rad(angle)
     sin = Math.sin(angle)
@@ -16,23 +15,58 @@ defmodule Exercises.Task2 do
     # center of image
     y0 = 0.5 * (height - 1)
 
-    {_, map} = Vix.Vips.Image.to_list(img)
-
-    binary =
+    bitmap =
       Enum.map(
         0..(width - 1),
         fn x ->
-          Task.async(fn -> get_binary(x, x0, y0, cos, sin, width, height, map) end)
+          # IO.inspect Enum.at(Map.get(image, :pixels), x)
+          Task.async(fn ->
+            TaskCall.run_sync_auto_detect(Exercises.Task2, :get_binary, [
+              x,
+              x0,
+              y0,
+              cos,
+              sin,
+              width,
+              height,
+              Map.get(image, :pixels)
+            ])
+          end)
         end
       )
       |> Task.await_many()
-      |> Enum.reduce(<<>>, fn b, acumu -> acumu <> b end)
+      |> Enum.reduce([], fn pixel, acc -> pixel ++ acc end)
+      |> Enum.reverse()
 
-    {_, img2} = Vix.Vips.Image.new_from_binary(binary, width, height, 3, :VIPS_FORMAT_UCHAR)
-    Image.write(img2, "./data/output_images/logo2.png")
+    IO.inspect(Enum.count(bitmap))
+
+    image =
+      Pngex.new(
+        type: :rgb,
+        depth: :depth8,
+        width: width,
+        height: height
+      )
+      |> Pngex.generate(bitmap)
+
+    File.write("gray8_256x256.png", image)
   end
 
-  def get_binary(x, x0, y0, cos, sin, width, height, map) do
+  def read(path) do
+    {:ok, image} = Imagineer.load(path)
+    image
+  end
+
+  def write(path, image) do
+    File.write(path, image)
+  end
+
+  def test_flow do
+    path_image = "./data/source_images/box.png"
+    angle = 120
+  end
+
+  def get_binary(x, x0, y0, cos, sin, width, height, pixel_map) do
     Enum.map(
       0..(height - 1),
       fn y ->
@@ -43,15 +77,14 @@ defmodule Exercises.Task2 do
 
         pixel =
           if xx >= 0 and xx < width and yy >= 0 and yy < height do
-            Enum.at(map, xx) |> Enum.at(yy)
+            Enum.at(pixel_map, xx) |> Enum.at(yy)
           else
-            Enum.at(map, x) |> Enum.at(y)
+            Enum.at(pixel_map, x) |> Enum.at(y)
           end
 
         pixel = if pixel == nil, do: [255, 255, 255], else: pixel
-        <<Enum.at(pixel, 0), Enum.at(pixel, 1), Enum.at(pixel, 2)>>
+        {Kernel.elem(pixel, 0), Kernel.elem(pixel, 1), Kernel.elem(pixel, 2)}
       end
     )
-    |> Enum.reduce(<<>>, fn b, acumu -> acumu <> b end)
   end
 end

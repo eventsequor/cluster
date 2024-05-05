@@ -10,6 +10,7 @@ Application.start(:nerves_bootstrap)
 
 config :cluster, target: Mix.target()
 
+config :livebook, :storage, Livebook.Storage.Ets
 
 # Customize non-Elixir parts of the firmware. See
 # https://hexdocs.pm/nerves/advanced-configuration.html for details.

@@ -47,8 +47,11 @@ defmodule Cluster.MixProject do
       {:ring_logger, "~> 0.10.0"},
       {:toolshed, "~> 0.3.0"},
       {:mutex, "~> 1.3"},
-      {:image, "~> 0.44.0"},
       {:math, "~> 0.7.0"},
+      {:pngex, "~> 0.1.2"},
+      {:ex_png, "~> 1.0"},
+      {:ex_image_info, "~> 0.2.4"},
+      {:imagineer, "~> 0.3.3"},
 
       # Allow Nerves.Runtime on host to support development, testing and CI.
       # See config/host.exs for usage.
@@ -67,7 +70,7 @@ defmodule Cluster.MixProject do
       {:nerves_system_rpi2, "~> 1.24", runtime: false, targets: :rpi2},
       {:nerves_system_rpi3, "~> 1.24", runtime: false, targets: :rpi3},
       {:nerves_system_rpi3a, "~> 1.24", runtime: false, targets: :rpi3a},
-      {:nerves_system_rpi4, "~> 1.24", runtime: false, targets: :rpi4},
+      {:nerves_system_rpi4, "~> 1.24", runtime: true, targets: :rpi4},
       {:nerves_system_bbb, "~> 2.19", runtime: false, targets: :bbb},
       {:nerves_system_osd32mp1, "~> 0.15", runtime: false, targets: :osd32mp1},
       {:nerves_system_x86_64, "~> 1.24", runtime: false, targets: :x86_64},
