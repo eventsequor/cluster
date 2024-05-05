@@ -1,9 +1,7 @@
 defmodule Exercises.Task2 do
   alias Cluster.TaskCall
 
-  def rotate(img, angle \\ 90) do
-    {:ok, image} = Imagineer.load("./data/source_images/box.png")
-
+  def rotate(image, angle \\ 0) do
     width = Map.get(image, :width)
     height = Map.get(image, :width)
 
@@ -40,16 +38,13 @@ defmodule Exercises.Task2 do
 
     IO.inspect(Enum.count(bitmap))
 
-    image =
-      Pngex.new(
-        type: :rgb,
-        depth: :depth8,
-        width: width,
-        height: height
-      )
-      |> Pngex.generate(bitmap)
-
-    File.write("gray8_256x256.png", image)
+    Pngex.new(
+      type: :rgb,
+      depth: :depth8,
+      width: width,
+      height: height
+    )
+    |> Pngex.generate(bitmap)
   end
 
   def read(path) do
@@ -62,8 +57,12 @@ defmodule Exercises.Task2 do
   end
 
   def test_flow do
-    path_image = "./data/source_images/box.png"
-    angle = 120
+    origin_image = "./priv/source_images/box.png"
+    destination_image = "./priv/output_images/box.png"
+    angle = 180
+    img = read(origin_image)
+    new_image = rotate(img, angle)
+    write(destination_image, new_image)
   end
 
   def get_binary(x, x0, y0, cos, sin, width, height, pixel_map) do
