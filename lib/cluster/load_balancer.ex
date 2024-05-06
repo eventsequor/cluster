@@ -44,6 +44,11 @@ defmodule Cluster.LoadBalancer do
   end
 
   def test(times \\ 10) do
-    Enum.each(0..times, fn _ -> get_node() end)
+    Enum.each(0..times, fn _ ->
+      spawn(fn ->
+        list = [Node.self(), Node.list()]
+        IO.inspect Enum.random(list)
+      end)
+    end)
   end
 end

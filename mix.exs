@@ -49,8 +49,6 @@ defmodule Cluster.MixProject do
       {:mutex, "~> 1.3"},
       {:math, "~> 0.7.0"},
       {:pngex, "~> 0.1.2"},
-      {:ex_png, "~> 1.0"},
-      {:ex_image_info, "~> 0.2.4"},
       {:imagineer, "~> 0.3.3"},
 
       # Allow Nerves.Runtime on host to support development, testing and CI.

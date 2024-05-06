@@ -18,45 +18,24 @@ defmodule Exercises.Task2 do
 
     chucks = Enum.to_list(0..(height - 1)) |> Enum.chunk_every(num_chucks)
 
-    """
-        bitmap =
-          Enum.map(chucks, fn rows_group ->
-            Task.async(fn ->
-              Cluster.TaskCall.run_sync_auto_detect(Exercises.Task2, :resolve_group_of_pixels, [
-                rows_group,
-                x0,
-                y0,
-                cos,
-                sin,
-                width,
-                height,
-                name_img_genserver
-              ])
-            end)
-          end)
-          |> Task.await_many(900_000)
-          |> Enum.reduce([], fn pixel, acc -> pixel ++ acc end)
-          |> Enum.reverse()
-    """
-
-    bitmap =
-      Enum.map(0..(height - 1), fn y ->
-        Enum.map(0..(width - 1), fn x ->
-          a = x - x0
-          b = y - y0
-          xx = floor(+a * cos - b * sin + x0)
-          yy = floor(+a * sin + b * cos + y0)
-
-          pixel =
-            if xx >= 0 and xx < width and yy >= 0 and yy < height do
-              Data.ImageInMemory.get_pixel(name_img_genserver, xx, yy)
-            else
-              {255, 255, 255}
-            end
-
-          {Kernel.elem(pixel, 0), Kernel.elem(pixel, 1), Kernel.elem(pixel, 2)}
+    pixel_map =
+      Enum.map(chucks, fn rows_group ->
+        Task.async(fn ->
+          Cluster.TaskCall.run_sync_auto_detect(Exercises.Task2, :process_chuck, [
+            rows_group,
+            width,
+            height,
+            x0,
+            y0,
+            cos,
+            sin,
+            name_img_genserver
+          ])
         end)
       end)
+      |> Task.await_many(900_000)
+      |> Enum.reverse()
+      |> Enum.reduce([], fn pixel, acc -> pixel ++ acc end)
 
     img = Data.ImageInMemory.get_image()
 
@@ -82,11 +61,31 @@ defmodule Exercises.Task2 do
       interlace_method: Map.get(img, :interlace_method),
       gamma: Map.get(img, :gamma),
       palette: Map.get(img, :palette),
-      pixels: bitmap,
+      pixels: pixel_map,
       mime_type: Map.get(img, :mime_type),
       background: Map.get(img, :background),
       transparency: Map.get(img, :transparency)
     }
+  end
+
+  def process_chuck(rows_group, width, height, x0, y0, cos, sin, name_img_genserver) do
+    Enum.map(rows_group, fn y ->
+      Enum.map(0..(width - 1), fn x ->
+        a = x - x0
+        b = y - y0
+        xx = floor(+a * cos - b * sin + x0)
+        yy = floor(+a * sin + b * cos + y0)
+
+        pixel =
+          if xx >= 0 and xx < width and yy >= 0 and yy < height do
+            Data.ImageInMemory.get_pixel(name_img_genserver, xx, yy)
+          else
+            {255, 255, 255}
+          end
+
+        {Kernel.elem(pixel, 0), Kernel.elem(pixel, 1), Kernel.elem(pixel, 2)}
+      end)
+    end)
   end
 
   def read(path) do
@@ -116,43 +115,11 @@ defmodule Exercises.Task2 do
   # Benchmark.Performance.average_mili Exercises.Task2, :test_flow, []
   def test_flow(angle \\ 0) do
     root_folder = if target() == :host, do: :code.priv_dir(:cluster), else: "/root/priv"
-    origin_image = "#{root_folder}/source_images/aqua.png"
-    destination_image = "#{root_folder}/output_images/aqua.png"
+    origin_image = "#{root_folder}/source_images/box.png"
+    destination_image = "#{root_folder}/output_images/box.png"
     img = read(origin_image)
     new_image = rotate(img, angle)
     Imagineer.write(new_image, destination_image)
-  end
-
-  def resolve_group_of_pixels(rows_group, x0, y0, cos, sin, width, height, name_img_genserver) do
-    Enum.map(
-      rows_group,
-      fn x ->
-        get_binary(x, x0, y0, cos, sin, width, height, name_img_genserver)
-      end
-    )
-    |> Enum.reduce([], fn pixel, acc -> pixel ++ acc end)
-  end
-
-  def get_binary(x, x0, y0, cos, sin, width, height, name_img_genserver) do
-    Enum.map(
-      0..(width - 1),
-      fn y ->
-        a = x - x0
-        b = y - y0
-        xx = floor(+a * cos - b * sin + x0)
-        yy = floor(+a * sin + b * cos + y0)
-
-        pixel =
-          if xx >= 0 and xx < width and yy >= 0 and yy < height do
-            Data.ImageInMemory.get_pixel(name_img_genserver, xx, yy)
-          else
-            {255, 255, 255}
-          end
-
-        pixel = if pixel == nil, do: [0, 0, 0], else: pixel
-        {Kernel.elem(pixel, 0), Kernel.elem(pixel, 1), Kernel.elem(pixel, 2)}
-      end
-    )
   end
 
   def target do

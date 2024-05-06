@@ -65,4 +65,10 @@ defmodule Data.ImageInMemory do
       GenServer.stop(name_genserver)
     end
   end
+
+  def test_get_pixel(name_genserver \\ MyImage, x, y, tries \\ 10) do
+    Enum.each(0..tries, fn _ ->
+      spawn(fn -> GenServer.call(name_genserver, {:get_pixel, x, y}) end)
+    end)
+  end
 end
