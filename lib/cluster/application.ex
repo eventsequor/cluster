@@ -15,6 +15,7 @@ defmodule Cluster.Application do
     children =
       [
         {Cluster.NodeCluster, :ok},
+        {Data.FolderConfig, :ok},
         {Cluster.LoadBalancer, 0},
         {Cluster.Variable, []},
         {Mutex, name: MyMutexConnect, meta: "some_data"},

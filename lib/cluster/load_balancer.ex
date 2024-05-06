@@ -7,7 +7,7 @@ defmodule Cluster.LoadBalancer do
 
   def get_node do
     resource_id = {User, {:id, 1}}
-    lock = Mutex.await(MyMutexConnect, resource_id)
+    lock = Mutex.await(MyMutexConnect, resource_id, :infinity)
     pos = Agent.get(__MODULE__, fn v -> v end) + 1
     node_list = Node.list() ++ [Node.self()]
     pos = if pos >= Enum.count(node_list), do: 0, else: pos
@@ -18,7 +18,7 @@ defmodule Cluster.LoadBalancer do
 
   def get_node_lists do
     resource_id = {User, {:id, 1}}
-    lock = Mutex.await(MyMutexConnect, resource_id)
+    lock = Mutex.await(MyMutexConnect, resource_id, :infinity)
     node_list = Node.list() ++ [Node.self()]
     Mutex.release(MyMutexConnect, lock)
     node_list

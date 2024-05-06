@@ -17,7 +17,6 @@ defmodule Exercises.Task2 do
       Enum.map(
         0..(width - 1),
         fn x ->
-          # IO.inspect Enum.at(Map.get(image, :pixels), x)
           Task.async(fn ->
             TaskCall.run_sync_auto_detect(Exercises.Task2, :get_binary, [
               x,
@@ -32,11 +31,9 @@ defmodule Exercises.Task2 do
           end)
         end
       )
-      |> Task.await_many()
+      |> Task.await_many(60000)
       |> Enum.reduce([], fn pixel, acc -> pixel ++ acc end)
       |> Enum.reverse()
-
-    IO.inspect(Enum.count(bitmap))
 
     Pngex.new(
       type: :rgb,
@@ -56,10 +53,10 @@ defmodule Exercises.Task2 do
     File.write(path, image)
   end
 
-  def test_flow do
-    origin_image = "./priv/source_images/box.png"
-    destination_image = "./priv/output_images/box.png"
-    angle = 180
+  def test_flow(angle \\ 0) do
+    root_folder = if target() == :host, do: :code.priv_dir(:cluster), else: "/root/priv"
+    origin_image = "#{root_folder}/source_images/logo.png"
+    destination_image = "#{root_folder}/output_images/logo.png"
     img = read(origin_image)
     new_image = rotate(img, angle)
     write(destination_image, new_image)
@@ -85,5 +82,9 @@ defmodule Exercises.Task2 do
         {Kernel.elem(pixel, 0), Kernel.elem(pixel, 1), Kernel.elem(pixel, 2)}
       end
     )
+  end
+
+  def target do
+    Application.get_env(:cluster, :target)
   end
 end

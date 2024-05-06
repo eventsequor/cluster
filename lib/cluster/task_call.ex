@@ -58,7 +58,7 @@ defmodule Cluster.TaskCall do
       Kernel.send(task.pid, {:ok, Kernel.apply(module, function_name, args)})
     end)
 
-    Task.await(task, 10000)
+    Task.await(task, :infinity)
   end
 
   def run_sync_auto(node \\ nil, function, args) do
