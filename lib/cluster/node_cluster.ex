@@ -42,7 +42,7 @@ defmodule Cluster.NodeCluster do
 
   def get_name_node(postfix) do
     if target() == :host do
-      :"nerves@#{postfix}"
+      :"nerves1@#{postfix}"
     else
       :"#{Toolshed.hostname()}@#{postfix}"
     end

@@ -15,8 +15,9 @@ defmodule Exercises.Task2 do
     y0 = 0.5 * (height - 1)
 
     num_chucks = floor(height / Enum.count(Cluster.LoadBalancer.get_node_lists()))
-
     chucks = Enum.to_list(0..(height - 1)) |> Enum.chunk_every(num_chucks)
+
+    IO.puts("Number of chucks: #{Enum.count(chucks)}")
 
     pixel_map =
       Enum.map(chucks, fn rows_group ->
@@ -69,6 +70,8 @@ defmodule Exercises.Task2 do
   end
 
   def process_chuck(rows_group, width, height, x0, y0, cos, sin, name_img_genserver) do
+    all_image = Data.ImageInMemory.get_image(name_img_genserver)
+
     Enum.map(rows_group, fn y ->
       Enum.map(0..(width - 1), fn x ->
         a = x - x0
@@ -78,7 +81,7 @@ defmodule Exercises.Task2 do
 
         pixel =
           if xx >= 0 and xx < width and yy >= 0 and yy < height do
-            Data.ImageInMemory.get_pixel(name_img_genserver, xx, yy)
+            Map.get(all_image, :pixels) |> Enum.at(yy) |> Enum.at(xx)
           else
             {255, 255, 255}
           end
@@ -115,8 +118,8 @@ defmodule Exercises.Task2 do
   # Benchmark.Performance.average_mili Exercises.Task2, :test_flow, []
   def test_flow(angle \\ 0) do
     root_folder = if target() == :host, do: :code.priv_dir(:cluster), else: "/root/priv"
-    origin_image = "#{root_folder}/source_images/box.png"
-    destination_image = "#{root_folder}/output_images/box.png"
+    origin_image = "#{root_folder}/source_images/logo.png"
+    destination_image = "#{root_folder}/output_images/logo.png"
     img = read(origin_image)
     new_image = rotate(img, angle)
     Imagineer.write(new_image, destination_image)
