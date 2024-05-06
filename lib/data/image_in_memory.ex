@@ -21,8 +21,28 @@ defmodule Data.ImageInMemory do
     {:reply, response, image}
   end
 
+  @impl true
+  def handle_call({:get_width}, _from, image) do
+    response = Map.get(image, :width)
+    {:reply, response, image}
+  end
+
+  @impl true
+  def handle_call({:get_height}, _from, image) do
+    response = Map.get(image, :height)
+    {:reply, response, image}
+  end
+
   def get_pixel(name_genserver \\ MyImage, x, y) do
     GenServer.call(name_genserver, {:get_pixel, x, y})
+  end
+
+  def get_width(name_genserver \\ MyImage) do
+    GenServer.call(name_genserver, {:get_width})
+  end
+
+  def get_height(name_genserver \\ MyImage) do
+    GenServer.call(name_genserver, {:get_height})
   end
 
   def stop(name_genserver \\ MyImage) do

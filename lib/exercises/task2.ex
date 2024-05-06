@@ -1,8 +1,52 @@
 defmodule Exercises.Task2 do
   alias Cluster.TaskCall
 
-  def rotate(image, angle \\ 0) do
-    Data.ImageInMemory.stop()
+  def rotate(name_img_genserver \\ MyImage, angle \\ 0) do
+    width = Data.ImageInMemory.get_width(name_img_genserver)
+    height = Data.ImageInMemory.get_height(name_img_genserver)
+
+    angle = Math.deg2rad(angle)
+    sin = Math.sin(angle)
+    cos = Math.cos(angle)
+    # point to rotate about
+    x0 = 0.5 * (width - 1)
+    # center of image
+    y0 = 0.5 * (height - 1)
+
+    num_chucks = floor(width / Enum.count(Cluster.LoadBalancer.get_node_lists()))
+
+    chucks = Enum.to_list(0..(width - 1)) |> Enum.chunk_every(num_chucks)
+
+    bitmap =
+      Enum.map(chucks, fn rows_group ->
+        Task.async(fn ->
+          Cluster.TaskCall.run_sync_auto_detect(Exercises.Task2, :resolve_group_of_pixels, [
+            rows_group,
+            x0,
+            y0,
+            cos,
+            sin,
+            width,
+            height,
+            name_img_genserver
+          ])
+        end)
+      end)
+      |> Task.await_many(120_000)
+      |> Enum.reduce([], fn pixel, acc -> pixel ++ acc end)
+      |> Enum.reverse()
+
+    Pngex.new(
+      type: :rgb,
+      depth: :depth8,
+      width: width,
+      height: height
+    )
+    |> Pngex.generate(bitmap)
+  end
+
+  def read(path) do
+    {:ok, image} = Imagineer.load(path)
     name_img_genserver = MyImage
 
     Enum.map(
@@ -18,51 +62,7 @@ defmodule Exercises.Task2 do
     )
     |> Task.await_many()
 
-    width = Map.get(image, :width)
-    height = Map.get(image, :width)
-
-    angle = Math.deg2rad(angle)
-    sin = Math.sin(angle)
-    cos = Math.cos(angle)
-    # point to rotate about
-    x0 = 0.5 * (width - 1)
-    # center of image
-    y0 = 0.5 * (height - 1)
-
-    bitmap =
-      Enum.map(
-        0..(width - 1),
-        fn x ->
-          Task.async(fn ->
-            TaskCall.run_sync_auto_detect(Exercises.Task2, :get_binary, [
-              x,
-              x0,
-              y0,
-              cos,
-              sin,
-              width,
-              height,
-              name_img_genserver
-            ])
-          end)
-        end
-      )
-      |> Task.await_many(60000)
-      |> Enum.reduce([], fn pixel, acc -> pixel ++ acc end)
-      |> Enum.reverse()
-
-    Pngex.new(
-      type: :rgb,
-      depth: :depth8,
-      width: width,
-      height: height
-    )
-    |> Pngex.generate(bitmap)
-  end
-
-  def read(path) do
-    {:ok, image} = Imagineer.load(path)
-    image
+    name_img_genserver
   end
 
   def write(path, image) do
@@ -79,28 +79,36 @@ defmodule Exercises.Task2 do
     write(destination_image, new_image)
   end
 
+  def resolve_group_of_pixels(rows_group, x0, y0, cos, sin, width, height, name_img_genserver) do
+    Enum.map(
+      rows_group,
+      fn x ->
+        get_binary(x, x0, y0, cos, sin, width, height, name_img_genserver)
+      end
+    )
+    |> Enum.reduce([], fn pixel, acc -> pixel ++ acc end)
+  end
+
   def get_binary(x, x0, y0, cos, sin, width, height, name_img_genserver) do
     Enum.map(
       0..(height - 1),
       fn y ->
-        Task.async(fn ->
-          a = x - x0
-          b = y - y0
-          xx = floor(+a * cos - b * sin + x0)
-          yy = floor(+a * sin + b * cos + y0)
+        a = x - x0
+        b = y - y0
+        xx = floor(+a * cos - b * sin + x0)
+        yy = floor(+a * sin + b * cos + y0)
 
-          pixel =
-            if xx >= 0 and xx < width and yy >= 0 and yy < height do
-              Data.ImageInMemory.get_pixel(name_img_genserver, xx, yy)
-            else
-              Data.ImageInMemory.get_pixel(name_img_genserver, x, y)
-            end
+        pixel =
+          if xx >= 0 and xx < width and yy >= 0 and yy < height do
+            Data.ImageInMemory.get_pixel(name_img_genserver, xx, yy)
+          else
+            Data.ImageInMemory.get_pixel(name_img_genserver, x, y)
+          end
 
-          pixel = if pixel == nil, do: [255, 255, 255], else: pixel
-          {Kernel.elem(pixel, 0), Kernel.elem(pixel, 1), Kernel.elem(pixel, 2)}
-        end)
+        pixel = if pixel == nil, do: [255, 255, 255], else: pixel
+        {Kernel.elem(pixel, 0), Kernel.elem(pixel, 1), Kernel.elem(pixel, 2)}
       end
-    )|> Task.await_many(:infinity)
+    )
   end
 
   def target do
