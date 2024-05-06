@@ -69,7 +69,7 @@ config :vintage_net,
            %{
              key_mgmt: :wpa_psk,
              ssid: "LOCALHOST",
-             psk: "Mefess0727"
+             psk: "Mefess0727S"
              # ssid: "RedmiNote10S",
              # psk: "some1234"
            }

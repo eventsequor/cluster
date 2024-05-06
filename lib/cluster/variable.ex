@@ -8,35 +8,31 @@ defmodule Cluster.Variable do
   end
 
   def get_sha do
-    resource_id = {User, {:id, 2}}
-    lock = Mutex.await(MyMutexConnect, resource_id)
-    sha = Agent.get(__MODULE__, fn {sha, _} -> sha end)
-    Mutex.release(MyMutexConnect, lock)
-    sha
+    manage_value({:get_sha, []})
   end
 
   def get_value do
-    resource_id = {User, {:id, 2}}
-    lock = Mutex.await(MyMutexConnect, resource_id)
-    value = Agent.get(__MODULE__, fn {_, value} -> value end)
-    Mutex.release(MyMutexConnect, lock)
-    value
+    Agent.get(__MODULE__, fn {_, value} -> value end)
   end
 
   def save_new_value(value) do
-    resource_id = {User, {:id, 2}}
-    lock = Mutex.await(MyMutexConnect, resource_id)
-    result = Agent.update(__MODULE__, fn _ -> {:crypto.hash(:sha, value), value} end)
-    Mutex.release(MyMutexConnect, lock)
-    result
+    manage_value({:save, value})
   end
 
-  def test do
-    Enum.each(1..2, fn x ->
-      spawn(fn ->
-        IO.inspect(get_value())
-        IO.inspect(save_new_value(Integer.to_string(x)))
-      end)
-    end)
+  defp manage_value({action, value}) when is_list(value) do
+    resource_id = {User, {:id, 2}}
+    lock = Mutex.await(MyMutexConnect, resource_id)
+
+    result =
+      case {action, value} do
+        {:save, value} ->
+          Agent.update(__MODULE__, fn _ -> {:crypto.hash(:sha, value), value} end)
+
+        {:get_sha, _} ->
+          Agent.get(__MODULE__, fn {sha, _} -> sha end)
+      end
+
+    Mutex.release(MyMutexConnect, lock)
+    result
   end
 end

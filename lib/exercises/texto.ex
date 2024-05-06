@@ -2,6 +2,12 @@ defmodule Exercises.Texto do
   def get_text do
     """
     This\tis\na test Test 1230 They're They it's the it they're
+    """
+  end
+
+  def get_texts do
+    """
+    This\tis\na test Test 1230 They're They it's the it they're
     This\tis\na test Test 1230 They're They it's the it they're
     This\tis\na test Test 1230 They're They it's the it they're
     This\tis\na test Test 1230 They're They it's the it they're

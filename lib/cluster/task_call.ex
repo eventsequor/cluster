@@ -53,8 +53,6 @@ defmodule Cluster.TaskCall do
       end)
 
     node = if node == nil, do: LoadBalancer.get_node(), else: node
-    IO.puts("Node to run service")
-    IO.inspect(node)
 
     Node.spawn(node, fn ->
       Kernel.send(task.pid, {:ok, Kernel.apply(module, function_name, args)})
@@ -68,7 +66,6 @@ defmodule Cluster.TaskCall do
       Task.async(fn ->
         receive do
           {:ok, response} ->
-            IO.inspect(Toolshed.hostname())
             response
 
           _ ->
@@ -77,8 +74,6 @@ defmodule Cluster.TaskCall do
       end)
 
     node = if node == nil, do: LoadBalancer.get_node(), else: node
-    IO.puts("Node to run service")
-    IO.inspect(node)
 
     Node.spawn(node, fn ->
       Kernel.send(task.pid, {:ok, Kernel.apply(function, args)})

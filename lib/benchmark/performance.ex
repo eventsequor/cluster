@@ -15,7 +15,7 @@ defmodule Benchmark.Performance do
 
   @doc """
   Use example
-  Benchmark.Performance.average_mili(Exercises.Task1, :count, [Exercises.Texto.get_text(), 1])
+  Benchmark.Performance.average_mili(Exercises.Task1, :count, [String.duplicate(Exercises.Texto.get_text(), 2), 1])
   """
   def average_mili(module, fun, args) do
     IO.puts("START TEST\n")
@@ -25,6 +25,29 @@ defmodule Benchmark.Performance do
       Enum.reduce(1..tries, 0, fn attemp, acc ->
         IO.puts("Attemp number: #{attemp}")
         execution_time = execute_mili(module, fun, args)
+        IO.puts("Time of execution in miliseconds: #{execution_time}\n")
+        acc + execution_time
+      end)
+
+    IO.puts("\nRESULTS:")
+    IO.puts("Number of attemps: #{tries}")
+    average_time = total_time / tries
+    IO.puts("Average time of execution: #{average_time}")
+    {:ok}
+  end
+
+  @doc """
+  Use example
+  Benchmark.Performance.average_mili(Exercises.Task1, :count, [String.duplicate(Exercises.Texto.get_text(), 2), 1])
+  """
+  def average_nano(module, fun, args) do
+    IO.puts("START TEST\n")
+    tries = 10
+
+    total_time =
+      Enum.reduce(1..tries, 0, fn attemp, acc ->
+        IO.puts("Attemp number: #{attemp}")
+        execution_time = execute_nano(module, fun, args)
         IO.puts("Time of execution in miliseconds: #{execution_time}\n")
         acc + execution_time
       end)

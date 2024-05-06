@@ -1,5 +1,4 @@
 defmodule Exercises.Task1 do
-  alias Cluster.TaskCall
 
   def count(string, split_list \\ 1) when is_bitstring(string) do
     words_list =
@@ -8,7 +7,7 @@ defmodule Exercises.Task1 do
       |> String.replace("\n", " ")
       |> String.downcase()
       |> String.replace("\t", " ")
-      |> String.duplicate(700)
+      # |> String.duplicate(700)
       |> String.split(" ")
       |> Enum.filter(fn x -> x != "" end)
 
@@ -28,27 +27,7 @@ defmodule Exercises.Task1 do
 
     divide_in = Integer.floor_div(Enum.count(words_list), parts_to_divide)
 
-    chucks =
-      Enum.chunk_every(words_list, divide_in)
-
-    sha = :crypto.hash(:sha, chucks)
-
-    Enum.each(Cluster.LoadBalancer.get_node_lists(), fn node ->
-      spawn(fn ->
-        sha_node_value = TaskCall.run_sync_auto_detect(Cluster.Variable, :get_sha, [])
-
-        unless sha == sha_node_value do
-          TaskCall.run_sync_auto_detect(Cluster.Variable, :save_new_value, [chucks])
-        end
-      end)
-    end)
-
-    IO.puts("Number os parts of list")
-    IO.inspect(Enum.count(chucks))
-    IO.inspect(divide_in)
-    IO.puts("\n")
-
-    chucks
+    Enum.chunk_every(words_list, divide_in)
     |> Enum.map(fn part_of_list ->
       Task.async(fn ->
         Cluster.TaskCall.run_sync_auto_detect(__MODULE__, :count_l, [part_of_list])
@@ -83,6 +62,20 @@ defmodule Exercises.Task1 do
   end
 
   def count_l(list_of_words) when is_list(list_of_words) do
+    Enum.reduce(list_of_words, Map.new(), fn word, words_map ->
+      if Map.get(words_map, word) == nil do
+        Map.put(words_map, word, 1)
+      else
+        Map.put(words_map, word, Map.get(words_map, word) + 1)
+      end
+    end)
+  end
+
+  def count_l(index) when is_number(index) do
+    list_of_words = Cluster.Variable.get_value() |> Enum.at(index)
+    IO.puts("past from here #{index}")
+    IO.inspect(list_of_words)
+
     Enum.reduce(list_of_words, Map.new(), fn word, words_map ->
       if Map.get(words_map, word) == nil do
         Map.put(words_map, word, 1)
