@@ -18,10 +18,10 @@ defmodule Data.ImageInMemory do
   @impl true
   def handle_call({:get_pixel, x, y}, _from, image) do
     response =
-      if(Map.get(image, :pixels) |> Enum.at(x) == nil) do
+      if(Map.get(image, :pixels) |> Enum.at(y) == nil) do
         {255, 255, 255}
       else
-        Map.get(image, :pixels) |> Enum.at(x) |> Enum.at(y)
+        Map.get(image, :pixels) |> Enum.at(y) |> Enum.at(x)
       end
 
     {:reply, response, image}
@@ -39,6 +39,11 @@ defmodule Data.ImageInMemory do
     {:reply, response, image}
   end
 
+  @impl true
+  def handle_call({:get_image}, _from, image) do
+    {:reply, image, image}
+  end
+
   def get_pixel(name_genserver \\ MyImage, x, y) do
     GenServer.call(name_genserver, {:get_pixel, x, y})
   end
@@ -49,6 +54,10 @@ defmodule Data.ImageInMemory do
 
   def get_height(name_genserver \\ MyImage) do
     GenServer.call(name_genserver, {:get_height})
+  end
+
+  def get_image(name_genserver \\ MyImage) do
+    GenServer.call(name_genserver, {:get_image})
   end
 
   def stop(name_genserver \\ MyImage) do
