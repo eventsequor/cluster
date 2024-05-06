@@ -5,7 +5,7 @@ defmodule Data.ImageInMemory do
 
   def start_link(image, name \\ MyImage) do
     stop(name)
-    GenServer.start_link(__MODULE__, image, name: name)
+    GenServer.start(__MODULE__, image, name: name)
   end
 
   # Server (callbacks)
@@ -17,7 +17,13 @@ defmodule Data.ImageInMemory do
 
   @impl true
   def handle_call({:get_pixel, x, y}, _from, image) do
-    response = Map.get(image, :pixels) |> Enum.at(x) |> Enum.at(y)
+    response =
+      if(Map.get(image, :pixels) |> Enum.at(x) == nil) do
+        {255, 255, 255}
+      else
+        Map.get(image, :pixels) |> Enum.at(x) |> Enum.at(y)
+      end
+
     {:reply, response, image}
   end
 

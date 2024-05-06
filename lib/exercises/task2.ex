@@ -1,7 +1,8 @@
 defmodule Exercises.Task2 do
   alias Cluster.TaskCall
 
-  def rotate(name_img_genserver \\ MyImage, angle \\ 0) do
+  def rotate(name_img_genserver \\ MyImage, angle \\ 90) do
+    IO.puts("Starting rotation")
     width = Data.ImageInMemory.get_width(name_img_genserver)
     height = Data.ImageInMemory.get_height(name_img_genserver)
 
@@ -13,9 +14,9 @@ defmodule Exercises.Task2 do
     # center of image
     y0 = 0.5 * (height - 1)
 
-    num_chucks = floor(width / Enum.count(Cluster.LoadBalancer.get_node_lists()))
+    num_chucks = floor(height / Enum.count(Cluster.LoadBalancer.get_node_lists()))
 
-    chucks = Enum.to_list(0..(width - 1)) |> Enum.chunk_every(num_chucks)
+    chucks = Enum.to_list(0..(height - 1)) |> Enum.chunk_every(num_chucks)
 
     bitmap =
       Enum.map(chucks, fn rows_group ->
@@ -32,7 +33,7 @@ defmodule Exercises.Task2 do
           ])
         end)
       end)
-      |> Task.await_many(120_000)
+      |> Task.await_many(900_000)
       |> Enum.reduce([], fn pixel, acc -> pixel ++ acc end)
       |> Enum.reverse()
 
@@ -72,8 +73,8 @@ defmodule Exercises.Task2 do
   # Benchmark.Performance.average_mili Exercises.Task2, :test_flow, []
   def test_flow(angle \\ 0) do
     root_folder = if target() == :host, do: :code.priv_dir(:cluster), else: "/root/priv"
-    origin_image = "#{root_folder}/source_images/logo.png"
-    destination_image = "#{root_folder}/output_images/logo.png"
+    origin_image = "#{root_folder}/source_images/aqua.png"
+    destination_image = "#{root_folder}/output_images/aqua.png"
     img = read(origin_image)
     new_image = rotate(img, angle)
     write(destination_image, new_image)
@@ -91,7 +92,7 @@ defmodule Exercises.Task2 do
 
   def get_binary(x, x0, y0, cos, sin, width, height, name_img_genserver) do
     Enum.map(
-      0..(height - 1),
+      0..(width - 1),
       fn y ->
         a = x - x0
         b = y - y0
@@ -105,7 +106,7 @@ defmodule Exercises.Task2 do
             Data.ImageInMemory.get_pixel(name_img_genserver, x, y)
           end
 
-        pixel = if pixel == nil, do: [255, 255, 255], else: pixel
+        pixel = if pixel == nil, do: [0, 0, 0], else: pixel
         {Kernel.elem(pixel, 0), Kernel.elem(pixel, 1), Kernel.elem(pixel, 2)}
       end
     )
