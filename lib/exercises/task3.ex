@@ -24,7 +24,19 @@ defmodule Exercises.Task3 do
           DSUM2 = [0.0, 0.0]
           weightsum = 0
 
-          Enum.map()
+          Enum.map(
+            0..(Enum.count(srcP()) - 1),
+            fn line ->
+              P = Enum.at(interpolatedP, line)
+              P1 = Enum.at(srcP(), line)
+              P2 = Enum.at(destP(), line)
+              Q = Enum.at(interpolatedQ, line)
+              Q1 = Enum.at(srcQ(), line)
+              Q2 = Enum.at(destQ(), line)
+
+              U =((sustra_matrix(pixel, P)))
+            end
+          )
         end)
       end)
     end)

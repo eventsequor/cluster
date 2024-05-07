@@ -1,6 +1,69 @@
 # Cluster
 
-**TODO: Add description**
+## Content
+
+ - Parallelism project 
+ - Parallelis exercices
+
+
+
+ ## Parallelism project 
+
+
+ This part of the project contains every necesary things to connect an execute code in a cluster
+
+  We are going to push focus on the folder /lib/cluster instance contains a group of code files specialicing to manage de cluster, next to you will see some details of each file
+
+  [application](lib/cluster/application.ex) 
+
+This provides a initial interface to create an application into the nerves, here we handle some supervice process that are necesaries to provide the features and funcionalities in every cluster, and in configured on mix.exs like application to create a instance of this when we start the node. 
+
+
+  [Load balancer](lib/cluster/load_balancer.ex)
+  This group of functions provides the functionality to asigne de node where the code it will run.
+  
+   [Node Cluster](lib/cluster/node_cluster.ex) 
+   
+   This provides and interfaces to handle the network when start the node, that is execute when the node starts, and it will try to connect with a node refence to be into the network
+
+
+   [text](lib/cluster/subprocess.ex) 
+   
+   Basic function to receive message  
+   ç
+   It's the most important gruop of function because create a sincronization with local or target foreant to execute projcssto execude code. This functions allows to call to
+
+    [text](lib/cluster/variable.ex)
+
+
+Execute a function in a node
+```` 
+  def run_sync_auto_detect(node \\ nil, module, function_name, args) do
+    task =
+      Task.async(fn ->
+        receive do
+          {:ok, response} ->
+            response
+
+          _ ->
+            IO.inspect("Error, something when wrong")
+            {:error}
+        end
+      end)
+
+    node = if node == nil, do: LoadBalancer.get_node(), else: node
+
+    Node.spawn(node, fn ->
+      Kernel.send(task.pid, {:ok, Kernel.apply(module, function_name, args)})
+    end)
+
+    Task.await(task, :infinity)
+  end
+code: 
+````
+
+
+
 
 ## Targets
 

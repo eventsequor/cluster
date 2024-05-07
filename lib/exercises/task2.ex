@@ -106,7 +106,7 @@ defmodule Exercises.Task2 do
         end)
       end
     )
-    |> Task.await_many()
+    |> Task.await_many(:infinity)
 
     name_img_genserver
   end

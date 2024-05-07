@@ -28,7 +28,7 @@ defmodule Cluster.NodeCluster do
       if status == :ok do
         Node.set_cookie(:PLXATUNGSDBIRVZNZSKB)
 
-        _ = Node.connect(:"nerves@#{"192.168.0.11"}")
+        _ = Node.connect(:"nerves@#{"192.168.232.17"}")
 
         _ = Node.list()
         {status, "Node successfully configurated"}
@@ -42,7 +42,7 @@ defmodule Cluster.NodeCluster do
 
   def get_name_node(postfix) do
     if target() == :host do
-      :"nerves1@#{postfix}"
+      :"nerves@#{postfix}"
     else
       :"#{Toolshed.hostname()}@#{postfix}"
     end
