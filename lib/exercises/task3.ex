@@ -1,22 +1,20 @@
+## autor: Eder Leandro Carbonero Baquero
+# All translation or adaptation was carried out by Eder Carbonero.
+## This code was based on a python code found on internet
+# https://github.com/antonmdv/Morphing/tree/master
 defmodule Exercises.Task3 do
   def beier_neely(img1, img2) do
     width = Map.get(img1, :width)
     height = Map.get(img1, :height)
 
-    numMorphedFrames = 12
-
-    # Constants for line weight equation
-    a = 0.2
-    b = 1.25
-    m = 0.1
+    numMorphedFrames = 10
 
     # DeltaP and DeltaQ
     d_P = divide_matrix(sustra_matrix(destP(), srcP()), numMorphedFrames + 1)
 
     d_Q = divide_matrix(sustra_matrix(destQ(), srcQ()), numMorphedFrames + 1)
 
-    Enum.map(0..(numMorphedFrames - 1), fn each_frame ->
-      ## Create a image
+    Enum.map(0..(numMorphedFrames ), fn each_frame ->
       interpolatedP = additing_matrix(srcP(), multiply_matrix(d_P, each_frame + 1))
       interpolatedQ = additing_matrix(srcQ(), multiply_matrix(d_Q, each_frame + 1))
 
@@ -94,7 +92,7 @@ defmodule Exercises.Task3 do
                     end
 
                   lineWeight =
-                    (vectorial_norm(sustra_matrix(vP, vQ)) ** m / (a + shortestDist)) ** b
+                    (vectorial_norm(sustra_matrix(vP, vQ)) ** m() / (a() + shortestDist)) ** b()
 
                   dSUM1 = additing_matrix(dSUM1, multiply_matrix(displacement1, lineWeight))
 
