@@ -3,9 +3,7 @@ defmodule Exercises.Task3 do
     width = Map.get(img1, :width)
     height = Map.get(img1, :height)
 
-    imSize = [width, height]
-
-    numMorphedFrames = 1
+    numMorphedFrames = 12
 
     # Constants for line weight equation
     a = 0.2
@@ -22,106 +20,171 @@ defmodule Exercises.Task3 do
       interpolatedP = additing_matrix(srcP(), multiply_matrix(d_P, each_frame + 1))
       interpolatedQ = additing_matrix(srcQ(), multiply_matrix(d_Q, each_frame + 1))
 
-      Enum.map(0..(width - 1), fn w ->
+      result_width =
         Enum.map(0..(height - 1), fn h ->
-          pixel = [w, h]
-          dSUM1 = [0.0, 0.0]
-          dSUM2 = [0.0, 0.0]
-          weightsum = 0
+          Enum.map(0..(width - 1), fn w ->
+            pixel = [w, h]
+            dSUM1 = [0.0, 0.0]
+            dSUM2 = [0.0, 0.0]
+            weightsum = 0
 
-          srcP_length = Enum.count(srcP()) - 1
+            srcP_length = Enum.count(srcP()) - 1
 
-          Enum.map(
-            0..srcP_length,
-            fn line ->
-              vP = Enum.at(interpolatedP, line)
-              vP1 = Enum.at(srcP(), line)
-              vP2 = Enum.at(destP(), line)
-              vQ = Enum.at(interpolatedQ, line)
-              vQ1 = Enum.at(srcQ(), line)
-              vQ2 = Enum.at(destQ(), line)
+            {dSUM1, dSUM2, weightsum} =
+              Enum.reduce(
+                0..srcP_length,
+                {dSUM1, dSUM2, weightsum},
+                fn line, {dSUM1, dSUM2, weightsum} ->
+                  vP = Enum.at(interpolatedP, line)
+                  vP1 = Enum.at(srcP(), line)
+                  vP2 = Enum.at(destP(), line)
+                  vQ = Enum.at(interpolatedQ, line)
+                  vQ1 = Enum.at(srcQ(), line)
+                  vQ2 = Enum.at(destQ(), line)
 
-              pU0 = dot(sustra_matrix(pixel, vP), sustra_matrix(vQ, vP))
+                  pU0 = dot(sustra_matrix(pixel, vP), sustra_matrix(vQ, vP))
 
-              pU1 =
-                vectorial_norm(sustra_matrix(vQ, vP)) *
-                  vectorial_norm(sustra_matrix(vQ, vP))
+                  pU1 =
+                    vectorial_norm(sustra_matrix(vQ, vP)) *
+                      vectorial_norm(sustra_matrix(vQ, vP))
 
-              pU = pU0 / pU1
+                  pU = pU0 / pU1
 
-              pV0 =
-                dot(
-                  sustra_matrix(pixel, vP),
-                  perpendicular(sustra_matrix(vQ, vP))
-                )
+                  pV0 =
+                    dot(
+                      sustra_matrix(pixel, vP),
+                      perpendicular(sustra_matrix(vQ, vP))
+                    )
 
-              pV1 = vectorial_norm(sustra_matrix(vQ, vP))
-              pV = pV0 / pV1
+                  pV1 = vectorial_norm(sustra_matrix(vQ, vP))
+                  pV = pV0 / pV1
 
-              xPrime1_0 =
-                additing_matrix(vP1, multiply_matrix(sustra_matrix(vQ1, vP1), pU))
+                  xPrime1_0 =
+                    additing_matrix(vP1, multiply_matrix(sustra_matrix(vQ1, vP1), pU))
 
-              xPrime1_1 =
-                multiply_matrix(perpendicular(sustra_matrix(vQ1, vP1)), pV)
+                  xPrime1_1 =
+                    multiply_matrix(perpendicular(sustra_matrix(vQ1, vP1)), pV)
 
-              xPrime1_2 = vectorial_norm(sustra_matrix(vQ1, vP1))
+                  xPrime1_2 = vectorial_norm(sustra_matrix(vQ1, vP1))
 
-              xPrime1 =
-                additing_matrix(xPrime1_0, divide_matrix(xPrime1_1, xPrime1_2))
+                  xPrime1 =
+                    additing_matrix(xPrime1_0, divide_matrix(xPrime1_1, xPrime1_2))
 
-              ###################
-              xPrime2_0 =
-                additing_matrix(vP2, multiply_matrix(sustra_matrix(vQ2, vP2), pU))
+                  ###################
+                  xPrime2_0 =
+                    additing_matrix(vP2, multiply_matrix(sustra_matrix(vQ2, vP2), pU))
 
-              xPrime2_1 =
-                multiply_matrix(perpendicular(sustra_matrix(vQ2, vP2)), pV)
+                  xPrime2_1 =
+                    multiply_matrix(perpendicular(sustra_matrix(vQ2, vP2)), pV)
 
-              xPrime2_2 = vectorial_norm(sustra_matrix(vQ2, vP2))
+                  xPrime2_2 = vectorial_norm(sustra_matrix(vQ2, vP2))
 
-              xPrime2 =
-                additing_matrix(xPrime2_0, divide_matrix(xPrime2_1, xPrime2_2))
+                  xPrime2 =
+                    additing_matrix(xPrime2_0, divide_matrix(xPrime2_1, xPrime2_2))
 
-              displacement1 = sustra_matrix(xPrime1, pixel)
-              displacement2 = sustra_matrix(xPrime2, pixel)
+                  displacement1 = sustra_matrix(xPrime1, pixel)
+                  displacement2 = sustra_matrix(xPrime2, pixel)
 
-              # get shortest distance from P to Q
-              shortestDist =
-                cond do
-                  pU >= 1 -> vectorial_norm(sustra_matrix(vQ, pixel))
-                  pU <= 0 -> vectorial_norm(sustra_matrix(vP, pixel))
-                  pU < 1 && pU > 0 -> Kernel.abs(pV)
+                  # get shortest distance from P to Q
+                  shortestDist =
+                    cond do
+                      pU >= 1 -> vectorial_norm(sustra_matrix(vQ, pixel))
+                      pU <= 0 -> vectorial_norm(sustra_matrix(vP, pixel))
+                      pU < 1 && pU > 0 -> Kernel.abs(pV)
+                    end
+
+                  lineWeight =
+                    (vectorial_norm(sustra_matrix(vP, vQ)) ** m / (a + shortestDist)) ** b
+
+                  dSUM1 = additing_matrix(dSUM1, multiply_matrix(displacement1, lineWeight))
+
+                  dSUM2 = additing_matrix(dSUM2, multiply_matrix(displacement2, lineWeight))
+
+                  weightsum = weightsum + lineWeight
+                  {dSUM1, dSUM2, weightsum}
                 end
+              )
 
-              lineWeight = (vectorial_norm(sustra_matrix(vP, vQ)) ** m / (a + shortestDist)) ** b
+            # displace X' with the sums
 
-              dSUM1 =
-                additing_matrix(
-                  dSUM1,
-                  additing_matrix(dSUM1, multiply_matrix(displacement1, lineWeight))
-                )
+            xPrime1 = additing_matrix(pixel, divide_matrix(dSUM1, weightsum))
+            xPrime2 = additing_matrix(pixel, divide_matrix(dSUM2, weightsum))
 
-              dSUM2 =
-                additing_matrix(
-                  dSUM2,
-                  additing_matrix(dSUM2, multiply_matrix(displacement2, lineWeight))
-                )
+            # get destenation in the new image
+            srcX = int(Enum.at(xPrime1, 0))
+            srcY = int(Enum.at(xPrime1, 1))
+            destX = int(Enum.at(xPrime2, 0))
+            destY = int(Enum.at(xPrime2, 1))
 
-              weightsum = weightsum + lineWeight
-            end
-          )
+            # if pixel is in range of the picture,then get color
+            # else get color from current pixel
 
+            srcRGB =
+              if Enum.find(0..(width - 1), fn x -> x == srcX end) != nil and
+                   Enum.find(0..(height - 1), fn y -> y == srcY end) != nil do
+                Enum.at(Map.get(img1, :pixels), srcY) |> Enum.at(srcX)
+              else
+                Enum.at(Map.get(img1, :pixels), h) |> Enum.at(w)
+              end
 
-          IO.inspect(dSUM1)
-          IO.inspect(dSUM2)
-          IO.inspect(weightsum)
-          if h<2, do: 1 / 0
+            destRGB =
+              if Enum.find(0..(width - 1), fn x -> x == destX end) != nil and
+                   Enum.find(0..(height - 1), fn y -> y == destY end) != nil do
+                Enum.at(Map.get(img2, :pixels), destY) |> Enum.at(destX)
+              else
+                Enum.at(Map.get(img2, :pixels), h) |> Enum.at(w)
+              end
+
+            wI2 = 2 * (each_frame + 1) * (1 / (numMorphedFrames + 1))
+            wI1 = 2 - wI2
+
+            r = (wI1 * elem(srcRGB, 0) + wI2 * elem(destRGB, 0)) / 2
+            g = (wI1 * elem(srcRGB, 1) + wI2 * elem(destRGB, 1)) / 2
+            b = (wI1 * elem(srcRGB, 2) + wI2 * elem(destRGB, 2)) / 2
+            {int(r), int(g), int(b)}
+          end)
         end)
 
-        w
-      end)
+      IO.inspect("Output")
+      IO.inspect(Enum.at(result_width, 0) |> Enum.at(0))
+      IO.inspect(Enum.count(result_width))
+      IO.inspect(Enum.count(Enum.at(result_width, 0)))
 
+      new_image = %Imagineer.Image.PNG{
+        alias: Map.get(img1, :alias),
+        width: Map.get(img1, :width),
+        height: Map.get(img1, :height),
+        bit_depth: Map.get(img1, :bit_depth),
+        color_type: Map.get(img1, :color_type),
+        color_format: Map.get(img1, :color_format),
+        uri: Map.get(img1, :uri),
+        format: Map.get(img1, :format),
+        attributes: Map.get(img1, :attributes),
+        data_content: Map.get(img1, :data_content),
+        raw: Map.get(img1, :raw),
+        comment: Map.get(img1, :comment),
+        mask: Map.get(img1, :mask),
+        compression: Map.get(img1, :compression),
+        decompressed_data: Map.get(img1, :decompressed_data),
+        unfiltered_rows: Map.get(img1, :unfiltered_rows),
+        scanlines: Map.get(img1, :scanlines),
+        filter_method: Map.get(img1, :filter_method),
+        interlace_method: Map.get(img1, :interlace_method),
+        gamma: Map.get(img1, :gamma),
+        palette: Map.get(img1, :palette),
+        pixels: result_width,
+        mime_type: Map.get(img1, :mime_type),
+        background: Map.get(img1, :background),
+        transparency: Map.get(img1, :transparency)
+      }
+
+      Imagineer.write(new_image, "./priv/output_images/beier_neely#{each_frame}.png")
       each_frame
     end)
+  end
+
+  def int(number) do
+    if number >= 0, do: floor(number), else: ceil(number)
   end
 
   def vectorial_norm(vector) do
