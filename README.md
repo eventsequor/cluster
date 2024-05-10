@@ -37,7 +37,29 @@ This provides a initial interface to create an application into the nerves, here
 
 
 Execute a function in a node
-```` 
+```` ≈
+  def run_sync_auto_detect(node \\ nil, module, function_name, args) do
+    task =
+      Task.async(fn ->
+        receive do
+          {:ok, response} ->
+            response
+
+          _ ->
+            IO.inspect("Error, something when wrong")
+            {:e8\
+            rror}
+        end
+      end)
+
+    node = if node == nil, do: LoadBalancer.get_node(), else: node
+
+    Node.spawn(node, fn ->
+      Kernel.send(task.pid, {:ok, Kernel.apply(module, function_name, args)})
+    end)
+
+    Task.await(task, :infinity)
+  end
   def run_sync_auto_detect(node \\ nil, module, function_name, args) do
     task =
       Task.async(fn ->
@@ -58,7 +80,7 @@ Execute a function in a node
     end)
 
     Task.await(task, :infinity)
-  end
+  end                             
 code: 
 ````
 
