@@ -5,11 +5,14 @@
 defmodule Exercises.Task3 do
   alias Cluster.TaskCall
 
-  def test(numMorphedFrames \\ 1) do
+  def test(numMorphedFrames \\ 10) do
     numMorphedFrames = if numMorphedFrames < 1, do: 1, else: numMorphedFrames
-    img1 = read("./priv/source_images/P1.png", Image1)
-    img2 = read("./priv/source_images/P2.png", Image2)
-    beier_neely(img1, img2, numMorphedFrames)
+    root_folder = if target() == :host, do: :code.priv_dir(:cluster), else: "/root/priv"
+    img1 = read("#{root_folder}/source_images/P1.png", Image1)
+    img2 = read("#{root_folder}/source_images/P2.png", Image2)
+    destination_folder = "#{root_folder}/output_images"
+    image_list = beier_neely(img1, img2, numMorphedFrames)
+    write_images(image_list, destination_folder)
   end
 
   def beier_neely(name_image1, name_image2, numMorphedFrames \\ 1) do
@@ -21,55 +24,60 @@ defmodule Exercises.Task3 do
 
     d_Q = divide_matrix(sustra_matrix(destQ(), srcQ()), numMorphedFrames + 1)
 
-    images =
-      Enum.map(0..numMorphedFrames, fn each_frame ->
-        Task.async(fn ->
-          interpolatedP = additing_matrix(srcP(), multiply_matrix(d_P, each_frame + 1))
-          interpolatedQ = additing_matrix(srcQ(), multiply_matrix(d_Q, each_frame + 1))
+    Enum.map(0..numMorphedFrames, fn each_frame ->
+      Task.async(fn ->
+        interpolatedP = additing_matrix(srcP(), multiply_matrix(d_P, each_frame + 1))
+        interpolatedQ = additing_matrix(srcQ(), multiply_matrix(d_Q, each_frame + 1))
 
-          num_chucks =
-            floor(
-              height /
-                (Enum.count(Cluster.LoadBalancer.get_node_lists()) *
-                   :erlang.system_info(:logical_processors_available))
-            )
+        num_chucks =
+          floor(
+            height /
+              (Enum.count(Cluster.LoadBalancer.get_node_lists()) *
+                 :erlang.system_info(:logical_processors_available))
+          )
 
-          chucks = Enum.to_list(0..(height - 1)) |> Enum.chunk_every(num_chucks)
+        chucks = Enum.to_list(0..(height - 1)) |> Enum.chunk_every(num_chucks)
 
-          IO.puts("Number of chucks: #{Enum.count(chucks)}")
+        IO.puts("Number of chucks: #{Enum.count(chucks)}")
 
-          pixel_map =
-            Enum.map(chucks, fn chuck ->
-              Task.async(fn ->
-                Cluster.TaskCall.run_sync_auto_detect(
-                  Exercises.Task3,
-                  :process_group_of_rows,
-                  [
-                    chuck,
-                    width,
-                    interpolatedP,
-                    interpolatedQ,
-                    each_frame,
-                    numMorphedFrames,
-                    name_image1,
-                    name_image2
-                  ]
-                )
-              end)
+        pixel_map =
+          Enum.map(chucks, fn chuck ->
+            Task.async(fn ->
+              Cluster.TaskCall.run_sync_auto_detect(
+                Exercises.Task3,
+                :process_group_of_rows,
+                [
+                  chuck,
+                  width,
+                  interpolatedP,
+                  interpolatedQ,
+                  each_frame,
+                  numMorphedFrames,
+                  name_image1,
+                  name_image2
+                ]
+              )
             end)
-            |> Task.await_many(900_000)
-            |> Enum.reverse()
-            |> Enum.reduce([], fn pixel, acc -> pixel ++ acc end)
+          end)
+          |> Task.await_many(900_000)
+          |> Enum.reverse()
+          |> Enum.reduce([], fn pixel, acc -> pixel ++ acc end)
 
-          get_new_image(name_image1, pixel_map)
-        end)
+        get_new_image(name_image1, pixel_map)
       end)
-      |> Task.await_many(900_000)
-
-    Enum.each(0..(Enum.count(images) - 1), fn pos ->
-      IO.puts("Saving images #{pos}")
-      Imagineer.write(Enum.at(images, pos), "./priv/output_images/beier_neely#{pos}.png")
     end)
+    |> Task.await_many(900_000)
+  end
+
+  def write_images(image_list, destination_folder) do
+    Enum.each(0..(Enum.count(image_list) - 1), fn pos ->
+      IO.puts("Saving images #{pos}")
+      write_image(Enum.at(image_list, pos), "#{destination_folder}/beier_neely#{pos}.png")
+    end)
+  end
+
+  def write_image(image, path) do
+    Imagineer.write(image, path)
   end
 
   def process_group_of_rows(
@@ -410,5 +418,9 @@ defmodule Exercises.Task3 do
       [207, 180],
       [272, 205]
     ]
+  end
+
+  def target do
+    Application.get_env(:cluster, :target)
   end
 end
