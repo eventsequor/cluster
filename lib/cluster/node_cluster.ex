@@ -28,7 +28,7 @@ defmodule Cluster.NodeCluster do
       if status == :ok do
         Node.set_cookie(:PLXATUNGSDBIRVZNZSKB)
 
-        _ = Node.connect(:"nerves@#{"192.168.232.17"}")
+        _ = Node.connect(:"nerves@#{"192.168.0.6"}")
 
         _ = Node.list()
         {status, "Node successfully configurated"}
