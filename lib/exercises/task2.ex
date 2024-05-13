@@ -111,18 +111,18 @@ defmodule Exercises.Task2 do
     name_img_genserver
   end
 
-  def write(path, image) do
-    File.write(path, image)
+  def write_image(image, path) do
+    Imagineer.write(image, path)
   end
 
   # Benchmark.Performance.average_mili Exercises.Task2, :test_flow, []
   def test_flow(angle \\ 0) do
     root_folder = if target() == :host, do: :code.priv_dir(:cluster), else: "/root/priv"
-    origin_image = "#{root_folder}/source_images/logo.png"
-    destination_image = "#{root_folder}/output_images/logo.png"
+    origin_image = "#{root_folder}/source_images/aqua.png"
+    destination_image = "#{root_folder}/output_images/aqua.png"
     img = read(origin_image)
     new_image = rotate(img, angle)
-    Imagineer.write(new_image, destination_image)
+    write_image(new_image, destination_image)
   end
 
   def target do
