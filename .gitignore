@@ -17,3 +17,5 @@
 erl_crash.dump
 
 /priv/output_images
+
+.DS_Store

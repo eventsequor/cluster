@@ -48,6 +48,7 @@ defmodule Cluster.TaskCall do
             response
 
           _ ->
+            IO.inspect("Error, something when wrong")
             {:error}
         end
       end)

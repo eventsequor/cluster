@@ -18,11 +18,9 @@ defmodule Data.ImageInMemory do
   @impl true
   def handle_call({:get_pixel, x, y}, _from, image) do
     response =
-      if(Map.get(image, :pixels) |> Enum.at(y) == nil) do
-        {255, 255, 255}
-      else
-        Map.get(image, :pixels) |> Enum.at(y) |> Enum.at(x)
-      end
+      if Map.get(image, :pixels) |> Enum.at(y) == nil,
+        do: {255, 255, 255},
+        else: Map.get(image, :pixels) |> Enum.at(y) |> Enum.at(x)
 
     {:reply, response, image}
   end
